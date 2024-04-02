@@ -1,7 +1,12 @@
 # Motivations
 
-I'm the kind of guy who struggle to decide what to order in a restaurant. Not only because to choose is to foresake. But also because I have no idea what dishes looks like when I read the description, and this is particularly true when the cuisine is outside of my comfort zone. or abroad.  
+I'm the kind of guy who struggle to decide what to order in a restaurant. Not only because to choose is to foresake. But also because I have no idea what dishes looks like when I read the description, and this is particularly true when the cuisine is outside of my comfort zone. or abroad. 
 
+ml model: CRF seems to be the fastest prospect for mobile inference
+
+data collection ?
+
+ml inference engine: check if executorch can be used
 
 # CameraX-MLKit
 
