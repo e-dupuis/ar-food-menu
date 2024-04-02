@@ -4,7 +4,8 @@ I'm the kind of guy who struggle to decide what to order in a restaurant. Not on
 
 ml model: CRF seems to be the fastest prospect for mobile inference
 
-data collection ?
+data: try to use publicly available datasets first.
+- mit restaurant (restaurant review) https://huggingface.co/datasets/tner/mit_restaurant
 
 ml inference engine: check if executorch can be used
 
