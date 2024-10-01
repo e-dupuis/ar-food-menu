@@ -10,6 +10,8 @@ import android.graphics.drawable.Drawable
 import com.google.mlkit.vision.text.Text.TextBlock
 
 class TextDrawable(private val textBlock: TextBlock) : Drawable() {
+    private var text: String = textBlock.text
+
     private val boundingRectPaint = Paint().apply {
         style = Paint.Style.STROKE
         color = Color.YELLOW
@@ -28,6 +30,10 @@ class TextDrawable(private val textBlock: TextBlock) : Drawable() {
         alpha = 255
         textSize = 36F
     }
+    fun updateText(newText: String) {
+        text = newText
+        // Update the drawing logic to reflect the new text
+    }
 
     private val contentPadding = 25
     private var textWidth = contentTextPaint.measureText(textBlock.text).toInt()
@@ -44,7 +50,7 @@ class TextDrawable(private val textBlock: TextBlock) : Drawable() {
             contentRectPaint
         )
         canvas.drawText(
-            textBlock.text,
+            text,
             (boundingBox.left + contentPadding).toFloat(),
             (boundingBox.bottom + contentPadding*2).toFloat(),
             contentTextPaint

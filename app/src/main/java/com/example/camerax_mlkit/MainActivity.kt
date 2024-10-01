@@ -28,6 +28,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.camerax_mlkit.databinding.ActivityMainBinding
+import com.google.mediapipe.examples.llminference.InferenceModel
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
@@ -37,12 +38,17 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import androidx.lifecycle.lifecycleScope
+import com.google.mlkit.vision.text.Text
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var barcodeScanner: BarcodeScanner
     private lateinit var recognizer: TextRecognizer
+    private lateinit var inferenceModel: InferenceModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,18 +64,21 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        cameraExecutor = Executors.newSingleThreadExecutor()
+        this.cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
     private fun startCamera() {
         val cameraController = LifecycleCameraController(baseContext)
         val previewView: PreviewView = viewBinding.viewFinder
 
-        val options = BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .build()
-        barcodeScanner = BarcodeScanning.getClient(options)
+//        val options = BarcodeScannerOptions.Builder()
+//            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+//            .build()
+//        barcodeScanner = BarcodeScanning.getClient(options)
         recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        inferenceModel = InferenceModel.getInstance(this)
+        // Flag to track inference status
+        var isInferenceInProgress = false
 
         cameraController.setImageAnalysisAnalyzer(
             ContextCompat.getMainExecutor(this),
@@ -91,8 +100,34 @@ class MainActivity : AppCompatActivity() {
 
                 previewView.overlay.clear()
                 for (block in textResults.textBlocks) {
-                    val textDrawable = TextDrawable(block)
-                    previewView.overlay.add(textDrawable)
+                    // Launch a coroutine to handle the inference
+                    lifecycleScope.launch {
+                        if (isInferenceInProgress) {
+                            // Wait for the previous inference to complete
+                            return@launch
+                        }
+
+                        isInferenceInProgress = true
+                        inferenceModel.generateResponseAsync("Extract dishes names from \"${block.text}\", return only the identified dish name if any, or nothing")
+
+                        // Collect partial results
+                        var fullResult = ""
+                        inferenceModel.partialResults.collect { (partialResult, done) ->
+                            // Handle the partial result
+                            fullResult += partialResult
+                            println("MainActivity $fullResult")
+                            if (done) {
+                                val textDrawable = TextDrawable(block)
+                                textDrawable.updateText(fullResult)
+                                previewView.overlay.add(textDrawable)
+
+                                // Reset the flag
+                                isInferenceInProgress = false
+                            }
+                        }
+
+
+                    }
                 }
             }
         )
