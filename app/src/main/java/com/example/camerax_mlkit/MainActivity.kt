@@ -33,15 +33,11 @@ import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import androidx.lifecycle.lifecycleScope
-import com.google.mlkit.vision.text.Text
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collect
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
@@ -108,18 +104,33 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         isInferenceInProgress = true
-                        inferenceModel.generateResponseAsync("Extract dishes names from \"${block.text}\", return only the identified dish name if any, or nothing")
+                        inferenceModel.generateResponseAsync("Extract dish names from \"${block.text}\" and return them in JSON format with a key \"dishes\".")
 
                         // Collect partial results
                         var fullResult = ""
                         inferenceModel.partialResults.collect { (partialResult, done) ->
                             // Handle the partial result
                             fullResult += partialResult
-                            println("MainActivity $fullResult")
+                            println("MainActivity Inference result: $fullResult")
                             if (done) {
-                                val textDrawable = TextDrawable(block)
-                                textDrawable.updateText(fullResult)
-                                previewView.overlay.add(textDrawable)
+                                runOnUiThread {
+                                    // Parse the JSON output
+                                    try {
+                                        val jsonObject = JSONObject(fullResult)
+                                        val dishes = jsonObject.getJSONArray("dishes")
+                                        val dishNames = mutableListOf<String>()
+                                        for (i in 0 until dishes.length()) {
+                                            dishNames.add(dishes.getString(i))
+                                        }
+
+                                        // Update the TextDrawable with the dish names
+                                        val textDrawable = TextDrawable(block)
+                                        textDrawable.updateText(dishNames.joinToString(", "))
+                                        previewView.overlay.add(textDrawable)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
 
                                 // Reset the flag
                                 isInferenceInProgress = false
@@ -148,7 +159,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TAG = "CameraX-MLKit"
+        private const val TAG = "AR-food-menu"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
