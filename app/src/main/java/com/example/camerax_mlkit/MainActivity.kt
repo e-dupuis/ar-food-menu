@@ -67,10 +67,6 @@ class MainActivity : AppCompatActivity() {
         val cameraController = LifecycleCameraController(baseContext)
         val previewView: PreviewView = viewBinding.viewFinder
 
-//        val options = BarcodeScannerOptions.Builder()
-//            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-//            .build()
-//        barcodeScanner = BarcodeScanning.getClient(options)
         recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         inferenceModel = InferenceModel.getInstance(this)
         // Flag to track inference status
